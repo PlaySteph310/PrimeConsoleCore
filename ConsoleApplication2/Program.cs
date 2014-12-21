@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
@@ -16,13 +17,14 @@ namespace PrimeConsoleCore
 {
     class Program
     {
-        static int zahl = 999999999;
-        static int zähler = 2;
-        static double anzahl = 0;
+        static long zahl = 1;
+        static long zähler = 2;
+        static long anzahl = 0;
         static bool laufen = true;
         public static bool sound = true;
         public static bool visible = true;
         public static Dictionary<string, bool> config = new Dictionary<string, bool>();
+        public static Dictionary<string, string> userconfig = new Dictionary<string, string>();
         static public string ParsePath(string path) //function by dr4yyee
         {
             var newPath = new StringBuilder();
@@ -36,7 +38,7 @@ namespace PrimeConsoleCore
         public static System.Media.SoundPlayer beep = new System.Media.SoundPlayer();
         public static void Main()
         {
-            Console.Title = "PrimeConsoleCore - Version 0.0.3";
+            Console.Title = "PrimeConsoleCore - Version 0.0.4";
             if (File.Exists(Environment.ExpandEnvironmentVariables(ParsePath(@"%localappdata%\\PCC\config.json"))))
             {
                 StreamReader configread = new StreamReader(ParsePath(@"%localappdata%\\PCC\config.json"));
@@ -66,6 +68,14 @@ namespace PrimeConsoleCore
             Console.WriteLine("Hilfe anzeigen: H");
             Console.WriteLine("Einstellungen: E\n");
             Console.WriteLine("Drücken Sie eine beliebige Taste um mit der Berechnung zu beginnen.");
+            WebClient userconfigdl = new WebClient();
+            userconfigdl.DownloadFile("http://steph.cf/pcc/index.html", "userconfig.json");
+            StreamReader userconfigread = new StreamReader("userconfig.json");
+            userconfig = JsonConvert.DeserializeObject<Dictionary<string, string>>(userconfigread.ReadToEnd());
+            userconfigread.Close();
+            File.Delete("userconfig.json");
+            zahl = Convert.ToInt32(userconfig["anzahl"]);
+            //zähler = ;
             beep.SoundLocation = "beep.wav";
             var auswahl = Console.ReadKey();
             switch (auswahl.Key)
