@@ -179,6 +179,7 @@ namespace PrimeConsoleCore
             Console.WriteLine("Tippen Sie die jeweilige Zahl für die jeweilige Einstellung.");
             Console.WriteLine("1 = Sound aktivieren/deaktivieren");
             Console.WriteLine("2 = \"Primzahl entdeckt\"-Meldung aktivieren/deaktiveren");
+            Console.WriteLine("3 = Anzahl ab wann \"Primzahl entdeckt\" angezeigt werden soll");
             Console.Write(">> ");
             var key = Console.ReadKey();
             Console.WriteLine("\n");
@@ -193,6 +194,9 @@ namespace PrimeConsoleCore
                     Console.WriteLine("Tippen Sie \"True\" oder \"False\"");
                     config["prime_found"] = Convert.ToBoolean(Console.ReadLine());
                     //visible = Convert.ToBoolean(Console.ReadLine());
+                    break;
+                case ConsoleKey.D3:
+                    Console.WriteLine("Geben Sie eine Anzahl an:");
                     break;
             }
             string json2 = JsonConvert.SerializeObject(config, Formatting.Indented);

@@ -7,3 +7,6 @@ C:\Users\Stephan\Documents\Visual Studio 2013\Projects\ConsoleApplication2\Conso
 C:\Users\Stephan\Documents\Visual Studio 2013\Projects\ConsoleApplication2\ConsoleApplication2\bin\Debug\beep.wav
 C:\Users\Stephan\Documents\Visual Studio 2013\Projects\ConsoleApplication2\ConsoleApplication2\bin\Debug\Newtonsoft.Json.dll
 C:\Users\Stephan\Documents\Visual Studio 2013\Projects\ConsoleApplication2\ConsoleApplication2\bin\Debug\Newtonsoft.Json.xml
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\ConsoleApplication2\bin\Debug\PrimeConsoleCore.exe.config
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\ConsoleApplication2\obj\Debug\PrimeConsoleCore.exe
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\ConsoleApplication2\obj\Debug\PrimeConsoleCore.pdb
