@@ -7,84 +7,79 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.IO;
-//using System.Runtime.InteropServices;
-//using System.Media.SoundPlayer;
 using Newtonsoft.Json;
 using System.Security.Principal;
 using System.Security.Permissions;
+using System.Numerics;
+using System.Security.Cryptography;
+using System.Net.Http;
+using System.Collections.Specialized;
+using System.Runtime.InteropServices;
 
 namespace PrimeConsoleCore
 {
-    class Program
+    public class Program
     {
-        static long zahl = 1;
-        static long zähler = 2;
-        static long anzahl = 0;
-        static bool laufen = true;
-        public static bool sound = true;
+        /* Variables */
+        // Numbers
+        public static BigInteger zahl = 1;
+        public static BigInteger zähler = 2;
+        public static BigInteger anzahl = 0;
+        // Text
+        public static string user = "";
+        public static string pass = "";
+        public static string token = "";
+        public static string resultToken = "";
+        public static string version = "0.0.7";
+        // Bools
         public static bool visible = true;
-        public static Dictionary<string, bool> config = new Dictionary<string, bool>();
+
+        /* Dictionarys */
+        public static Dictionary<string, string> config = new Dictionary<string, string>();
         public static Dictionary<string, string> userconfig = new Dictionary<string, string>();
-        static public string ParsePath(string path) //function by dr4yyee
+
+        /* Threads */
+        public static Thread pause = new Thread(new ThreadStart(stoppen));
+        public static Thread berechnungthread = new Thread(new ThreadStart(berechnung));
+        public static Thread tastethread = new Thread(new ThreadStart(taste));
+
+        /* %directorypath% by Jonathan */
+        public static string ParsePath(string path) //function by dr4yyee
         {
             var newPath = new StringBuilder();
             var folders = path.Split(Path.DirectorySeparatorChar);
             foreach (var folder in folders) newPath.Append((Regex.IsMatch(folder, "%.+%")) ? Environment.GetEnvironmentVariable(Regex.Match(folder, "(?:%)(.+)(?:%)").Groups[1].Value) : folder).Append((folders[folders.Length - 1] == folder) ? string.Empty : new string(Path.DirectorySeparatorChar, 1));
             return newPath.ToString();
         }
-        static Thread pause = new Thread(new ThreadStart(stoppen));
-        public static Thread berechnungthread = new Thread(new ThreadStart(berechnung));
-        public static Thread tastethread = new Thread(new ThreadStart(taste));
-        public static System.Media.SoundPlayer beep = new System.Media.SoundPlayer();
+
+        /* Beepsound */
+        [DllImport("kernel32.dll")]
+        public static extern bool Beep(int Frequenz, int Dauer);
+
+
+        /* Main*/
         public static void Main()
         {
-            Console.Title = "PrimeConsoleCore - Version 0.0.4";
-            if (File.Exists(Environment.ExpandEnvironmentVariables(ParsePath(@"%localappdata%\\PCC\config.json"))))
+            Config.checkfiles();
+            Console.Title = "PrimeConsoleCore - Version "+ config["version"];
+            if (config["welcome_message"] == "true")
             {
-                StreamReader configread = new StreamReader(ParsePath(@"%localappdata%\\PCC\config.json"));
-                config = JsonConvert.DeserializeObject<Dictionary<string, bool>>(configread.ReadToEnd());
-                configread.Close();
+                Console.WriteLine("\n\n\n\n\n\n\n");
+                Console.WriteLine("                   _    _      _                          _ ");
+                Thread.Sleep(100);
+                Console.WriteLine("                  | |  | |    | |                        | |");
+                Thread.Sleep(100);
+                Console.WriteLine("                  | |  | | ___| | ___ ___  _ __ ___   ___| |");
+                Thread.Sleep(100);
+                Console.WriteLine("                  | |/\\| |/ _ \\ |/ __/ _ \\| '_ ` _ \\ / _ \\ |");
+                Thread.Sleep(100);
+                Console.WriteLine("                  \\  /\\  /  __/ | (_| (_) | | | | | |  __/_|");
+                Thread.Sleep(100);
+                Console.WriteLine("                   \\/  \\/ \\___|_|\\___\\___/|_| |_| |_|\\___(_)");
+                Thread.Sleep(1000);
+                Console.Clear();
             }
-            else
-            {
-                config.Add("sound", true);
-                config.Add("prime_found", true);
-                string json = JsonConvert.SerializeObject(config, Formatting.Indented);
-                if (Directory.Exists(Environment.ExpandEnvironmentVariables(ParsePath(@"%localappdata%\\PCC\"))))
-                {
-
-                }
-                else
-                {
-                    string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ParsePath(@"%localappdata%\\PCC\"));
-                    Directory.CreateDirectory(filePath);
-                }
-                string filePath2 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ParsePath(@"%localappdata%\\PCC\config.json"));
-                File.WriteAllText(filePath2, json);
-            }
-            Console.WriteLine("");
-            Console.WriteLine("Sie können jederzeit mit der Taste \"S\" sich die Statistiken des Programmes angucken.\n");
-            Console.WriteLine("Programm stoppen: P");
-            Console.WriteLine("Hilfe anzeigen: H");
-            Console.WriteLine("Einstellungen: E\n");
-            Console.WriteLine("Drücken Sie eine beliebige Taste um mit der Berechnung zu beginnen.");
-            WebClient userconfigdl = new WebClient();
-            userconfigdl.DownloadFile("http://steph.cf/pcc/index.html", "userconfig.json");
-            StreamReader userconfigread = new StreamReader("userconfig.json");
-            userconfig = JsonConvert.DeserializeObject<Dictionary<string, string>>(userconfigread.ReadToEnd());
-            userconfigread.Close();
-            File.Delete("userconfig.json");
-            zahl = Convert.ToInt32(userconfig["anzahl"]);
-            //zähler = ;
-            beep.SoundLocation = "beep.wav";
-            var auswahl = Console.ReadKey();
-            switch (auswahl.Key)
-            {
-                case ConsoleKey.E:
-                    einstellungen();
-                    break;
-            }
-
+            Login.login();
             Parallel.Invoke(() =>
                  {
                      berechnungthread.Start();
@@ -99,28 +94,35 @@ namespace PrimeConsoleCore
         public static void stoppen ()
         {
             berechnungthread.Suspend();
-            Console.WriteLine("\nSie haben die Berechnung gestoppt! Drücken Sie eine Taste um die Berechnung fortzusetzen.");
-            Console.WriteLine("Anzahl der entdeckten Primzahlen: "+anzahl);
+            Console.WriteLine("");
+            Console.WriteLine("  ╔══════════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ║  You stopped the calculation. Press a button to resume the calculation.  ║");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ╚══════════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine("");
+            Console.WriteLine(" >> Number of founded primes: "+anzahl);
+            Console.WriteLine(" >> Current prime: " + zahl);
             Console.ReadLine();
             berechnungthread.Resume();
             taste();
         }
         public static void berechnung ()
         {
-            while (laufen == true)
+            while (true)
             {
                 if (zahl % zähler == 0 && zahl != 1)
                 {
                     if (zahl == zähler)
                     {
-                        if(config["prime_found"] == true)
+                        anzahl++;
+                        if(config["prime_found"] == "true" && visible == true)
                         {
-                            anzahl++;
-                            if (config["sound"] == true)
+                            Console.WriteLine(" >> Prime found!! (" + anzahl + "): " + zahl);
+                            if (config["sound"] == "true")
                             {
-                                beep.Play();
+                                Beep(1000, 500);
                             }
-                            Console.WriteLine("Primzahl entdeckt! (" + anzahl + "): " + zahl);
                         }
                         zahl++;
                         zähler = 2;
@@ -144,92 +146,191 @@ namespace PrimeConsoleCore
         }
         public static void taste()
         {
-            var key = Console.ReadKey();
-            if (key.Key == ConsoleKey.P)
+            switch (Console.ReadKey().Key)
             {
-                stoppen();
-            }
-            else if (key.Key == ConsoleKey.E)
-            {
-                berechnungthread.Suspend();
-                einstellungen();
-                berechnungthread.Resume();
-                taste();
-            }
-            else if (key.Key == ConsoleKey.H)
-            {
-                //if (visible != false)
-                //{
-                //    visible = false;
-                //}
-                hilfe();
-                taste();
-                visible = true;
-            }
-            else
-            {
-                taste();
+                case ConsoleKey.P:
+                    Console.Write("\b \b");
+                    stoppen();
+                    break;
+                case ConsoleKey.E:
+                    visible = false;
+                    einstellungen();
+                    visible = true;
+                    taste();
+                    break;
+                case ConsoleKey.H:
+                    visible = false;
+                    hilfe();
+                    visible = true;
+                    taste();
+                    break;
+                default:
+                    taste();
+                    break;
             }
         }
         public static void einstellungen()
         {
             Console.Clear();
-            Console.WriteLine("Einstellungen:");
-            Console.WriteLine("Was möchten Sie verändern?");
-            Console.WriteLine("Tippen Sie die jeweilige Zahl für die jeweilige Einstellung.");
-            Console.WriteLine("1 = Sound aktivieren/deaktivieren");
-            Console.WriteLine("2 = \"Primzahl entdeckt\"-Meldung aktivieren/deaktiveren");
-            Console.WriteLine("3 = Anzahl ab wann \"Primzahl entdeckt\" angezeigt werden soll");
-            Console.Write(">> ");
-            var key = Console.ReadKey();
-            Console.WriteLine("\n");
-            switch (key.Key)
+            Console.WriteLine("");
+            Console.WriteLine("  ╔══════════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ║                       PrimeConsoleCore :: Settings                       ║");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ║                        What do you want to change?                       ║");
+            Console.WriteLine("  ║             (type the relevant number to change the setting)             ║");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ║          activate/deactivate sounds                   : press 1          ║");
+            Console.WriteLine("  ║          activate/deactivate \"Prime found!!\" message:   press 2          ║");
+            Console.WriteLine("  ║          activate/deactivate welcome message          : press 3          ║");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ╚══════════════════════════════════════════════════════════════════════════╝");
+            Console.Write(" >> ");
+            var einstellung = "";
+            switch (Console.ReadKey().Key)
             {
                 case ConsoleKey.D1:
-                    Console.WriteLine("Tippen Sie \"True\" oder \"False\"");
-                    config["sound"] = Convert.ToBoolean(Console.ReadLine());
-                    //sound = Convert.ToBoolean(Console.ReadLine());
+                    Console.Write("\n");
+                    Console.WriteLine("Type \"True\" or \"False\"");
+                    einstellung = Console.ReadLine();
+                    if (einstellung == "true" || einstellung == "True")
+                    {
+                        config["sound"] = "true";
+                    }
+                    else if (einstellung == "false" || einstellung == "False")
+                    {
+                        config["sound"] = "false";
+                    }
+                    else
+                    {
+                        Console.WriteLine("Only \"True\" or \"False\"!");
+                        Console.ReadLine();
+                        break;
+                    }
                     break;
                 case ConsoleKey.D2:
-                    Console.WriteLine("Tippen Sie \"True\" oder \"False\"");
-                    config["prime_found"] = Convert.ToBoolean(Console.ReadLine());
-                    //visible = Convert.ToBoolean(Console.ReadLine());
+                    Console.Write("\n");
+                    Console.WriteLine("Type \"True\" or \"False\"");
+                    einstellung = Console.ReadLine();
+                    if (einstellung == "true" || einstellung == "True")
+                    {
+                        config["prime_found"] = "true";
+                    }
+                    else if (einstellung == "false" || einstellung == "False")
+                    {
+                        config["prime_found"] = "false";
+                    }
+                    else
+                    {
+                        Console.WriteLine("Only \"True\" or \"False\"!");
+                        Console.ReadLine();
+                        break;
+                    }
                     break;
                 case ConsoleKey.D3:
-                    Console.WriteLine("Geben Sie eine Anzahl an:");
+                    Console.Write("\n");
+                    Console.WriteLine("Type \"True\" or \"False\"");
+                    einstellung = Console.ReadLine();
+                    if (einstellung == "true" || einstellung == "True")
+                    {
+                        config["welcome_message"] = "true";
+                    }
+                    else if (einstellung == "false" || einstellung == "False")
+                    {
+                        config["welcome_message"] = "false";
+                    }
+                    else
+                    {
+                        Console.WriteLine("Only \"True\" or \"False\"!");
+                        Console.ReadLine();
+                        break;
+                    }
+                    break;
+                default:
                     break;
             }
-            string json2 = JsonConvert.SerializeObject(config, Formatting.Indented);
-            string filePath3 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ParsePath(@"%localappdata%\\PCC\config.json"));
-            File.WriteAllText(filePath3, json2);
-            Console.WriteLine("Drücken Sie eine Taste um zurückzukehren.");
-            Console.ReadLine();
+            File.WriteAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ParsePath(@"%localappdata%\\PCC\config.json")), JsonConvert.SerializeObject(config, Formatting.Indented));
+            Console.WriteLine("Do you want to change other settings? (yes / no)");
+            switch(Console.ReadLine())
+            {
+                case "yes":
+                    einstellungen();
+                    break;
+                case "Ja":
+                    einstellungen();
+                    break;
+                case "no":
+                    break;
+                case "nein":
+                    break;
+                default:
+                    break;
+            }
             Console.Clear();
         }
         public static void hilfe()
         {
             Console.Clear();
-            Console.WriteLine("Hilfe:");
-            Console.WriteLine("Drücken Sie die jeweilige Taste auf ihrer Tastatur um die jeweiligen Befehle auszuführen.");
-            Console.WriteLine("Einstellungen: E");
-            Console.WriteLine("Berechnung stoppen/pausieren: P");
-            Console.WriteLine("Hilfe anzeigen: H\n");
-            Console.WriteLine("Drücken Sie eine Taste um zurückzukehren.");
+            Console.WriteLine("");
+            Console.WriteLine("  ╔══════════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ║                         PrimeConsoleCore :: Help                         ║");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ║          Press the relevant button to start the relevant option          ║");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ║                        Stop calculating : press P                        ║");
+            Console.WriteLine("  ║                        Show help        : press H                        ║");
+            Console.WriteLine("  ║                        Show settings    : press E                        ║");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ║                       Go back by pressing a button                       ║");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ╚══════════════════════════════════════════════════════════════════════════╝");
             Console.ReadLine();
             Console.Clear();
         }
-        /*public enum BeepType
+        public static void start()
         {
-            SimpleBeep = -1,
-            IconAsterisk = 0x00000040,
-            IconExclamation = 0x00000030,
-            IconHand = 0x00000010,
-            IconQuestion = 0x00000020,
-            Ok = 0x00000000,
+            Console.WriteLine("");
+            Console.WriteLine("  ╔══════════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ║                       PrimeConsoleCore :: Welcome!                       ║");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ║                        Stop calculating: press P                         ║");
+            Console.WriteLine("  ║                        Show help:        press H                         ║");
+            Console.WriteLine("  ║                        Show settings:    press E                         ║");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ║                  Start calculation by pressing a button                  ║");
+            Console.WriteLine("  ║                                                                          ║");
+            Console.WriteLine("  ╚══════════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine("");
+            switch (Console.ReadKey().Key)
+            {
+                case ConsoleKey.E:
+                    einstellungen();
+                    start();
+                    break;
+                case ConsoleKey.H:
+                    hilfe();
+                    start();
+                    break;
+                default:
+                    break;
+            }
         }
-        [DllImport("user32.dll")]
-        public static extern bool MessageBeep(BeepType beepType);
-        [DllImport("kernel32.dll")]
-        public static extern bool Beep(int frequency, int duration);*/
+        public static String sha256_hash(String value)
+        {
+            StringBuilder Sb = new StringBuilder();
+
+            using (SHA256 hash = SHA256Managed.Create())
+            {
+                Encoding enc = Encoding.UTF8;
+                Byte[] result = hash.ComputeHash(enc.GetBytes(value));
+
+                foreach (Byte b in result)
+                    Sb.Append(b.ToString("x2"));
+            }
+
+            return Sb.ToString();
+        }
     }
 }
