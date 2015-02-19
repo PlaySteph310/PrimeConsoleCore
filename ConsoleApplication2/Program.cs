@@ -33,7 +33,7 @@ namespace PrimeConsoleCore
         public static string pass = "";
         public static string token = "";
         public static string resultToken = "";
-        public static string version = "0.0.8";
+        public static string version = "0.0.8.1";
         // Bools
         public static bool visible = true;
 
@@ -43,9 +43,10 @@ namespace PrimeConsoleCore
 
         /* Threads */
         public static Thread pause = new Thread(new ThreadStart(stoppen));
-        public static Thread berechnungthread = new Thread(new ThreadStart(berechnung));
+        //public static Thread berechnungthread = new Thread(new ThreadStart(berechnung));
         public static Thread tastethread = new Thread(new ThreadStart(taste));
         public static Thread send = new Thread(new ThreadStart(SendPrimes));
+        public static Thread[] bthreads = new Thread[Environment.ProcessorCount];
 
         /* %directorypath% by Jonathan */
         public static string ParsePath(string path) //function by dr4yyee
@@ -121,8 +122,6 @@ namespace PrimeConsoleCore
             Login.login();
             token = userconfig["token"];
             threads = Environment.ProcessorCount;
-            threads = threads - 1;
-            Thread[] bthreads = new Thread[threads];
             for (int i = 0; i < threads; i++ )
             {
                 bthreads[i] = new Thread(new ThreadStart(berechnung));
@@ -148,7 +147,10 @@ namespace PrimeConsoleCore
         }
         public static void stoppen ()
         {
-            berechnungthread.Suspend();
+            for (int i = 0; i < threads; i++)
+            {
+                bthreads[i].Suspend();
+            }
             Console.WriteLine("");
             Console.WriteLine("  ╔══════════════════════════════════════════════════════════════════════════╗");
             Console.WriteLine("  ║                                                                          ║");
@@ -159,7 +161,10 @@ namespace PrimeConsoleCore
             Console.WriteLine(" >> Number of founded primes: "+anzahl);
             Console.WriteLine(" >> Current prime: " + zahl);
             Console.ReadLine();
-            berechnungthread.Resume();
+            for (int i = 0; i < threads; i++)
+            {
+                bthreads[i].Resume();
+            }
             taste();
         }
         public static void berechnung ()
