@@ -15,6 +15,7 @@ using System.Security.Cryptography;
 using System.Net.Http;
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 namespace PrimeConsoleCore
 {
@@ -23,14 +24,16 @@ namespace PrimeConsoleCore
         /* Variables */
         // Numbers
         public static BigInteger zahl = 1;
-        public static BigInteger zähler = 2;
+        //public static BigInteger zähler = 2;
         public static BigInteger anzahl = 0;
+        public static BigInteger primzahl = 1;
+        public static int threads = 0;
         // Text
         public static string user = "";
         public static string pass = "";
         public static string token = "";
         public static string resultToken = "";
-        public static string version = "0.0.7";
+        public static string version = "0.0.8";
         // Bools
         public static bool visible = true;
 
@@ -42,6 +45,7 @@ namespace PrimeConsoleCore
         public static Thread pause = new Thread(new ThreadStart(stoppen));
         public static Thread berechnungthread = new Thread(new ThreadStart(berechnung));
         public static Thread tastethread = new Thread(new ThreadStart(taste));
+        public static Thread send = new Thread(new ThreadStart(SendPrimes));
 
         /* %directorypath% by Jonathan */
         public static string ParsePath(string path) //function by dr4yyee
@@ -55,11 +59,46 @@ namespace PrimeConsoleCore
         /* Beepsound */
         [DllImport("kernel32.dll")]
         public static extern bool Beep(int Frequenz, int Dauer);
+        public static void SendPrimes()
+        {
+            while (true)
+            {
+                Dictionary<string, string> sendprimes = new Dictionary<string, string>();
+                string result = "";
+                using (var client = new WebClient())
+                {
+                    var values = new NameValueCollection();
+                    values["username"] = Program.user;
+                    values["password"] = Program.pass;
+                    values["token"] = Program.token;
+                    values["prime"] = Convert.ToString(Program.zahl);
+                    result = Encoding.Default.GetString(client.UploadValues("http://prime.steph.ml/sendprime.php", values)); ;
+                }
+                result = result.Replace("&quot;", "\"");
+                sendprimes = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
+                if (sendprimes["send"] == "true")
+                {
+                    Console.WriteLine(" >> Primes were send to the server.");
+                }
+                else if (sendprimes["send"] == "false")
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(" >> Primes were not send to the server!");
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                }
+                else
+                {
+                    Console.WriteLine(" >> Primes were not send to the server!");
+                }
+                System.Threading.Thread.Sleep(120000);
+            }
 
+        }
 
         /* Main*/
         public static void Main()
         {
+            Console.SetWindowPosition(0, 0);
             Config.checkfiles();
             Console.Title = "PrimeConsoleCore - Version "+ config["version"];
             if (config["welcome_message"] == "true")
@@ -80,13 +119,29 @@ namespace PrimeConsoleCore
                 Console.Clear();
             }
             Login.login();
+            token = userconfig["token"];
+            threads = Environment.ProcessorCount;
+            threads = threads - 1;
+            Thread[] bthreads = new Thread[threads];
+            for (int i = 0; i < threads; i++ )
+            {
+                bthreads[i] = new Thread(new ThreadStart(berechnung));
+            }
             Parallel.Invoke(() =>
                  {
-                     berechnungthread.Start();
+                     //berechnungthread.Start();
+                     for (int i = 0; i < threads; i++)
+                     {
+                         bthreads[i].Start();
+                     }
                  },
                  () =>
                  {
                      tastethread.Start();
+                 },
+                 () =>
+                 {
+                     send.Start();
                  }
                 );
             //pause.Start();
@@ -109,6 +164,8 @@ namespace PrimeConsoleCore
         }
         public static void berechnung ()
         {
+            //BigInteger zahl = 1;
+            BigInteger zähler = 2;
             while (true)
             {
                 if (zahl % zähler == 0 && zahl != 1)
@@ -121,9 +178,10 @@ namespace PrimeConsoleCore
                             Console.WriteLine(" >> Prime found!! (" + anzahl + "): " + zahl);
                             if (config["sound"] == "true")
                             {
-                                Beep(1000, 500);
+                                //Beep(1000, 500);
                             }
                         }
+                        primzahl++;
                         zahl++;
                         zähler = 2;
                     }

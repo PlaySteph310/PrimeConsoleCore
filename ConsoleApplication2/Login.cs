@@ -51,15 +51,25 @@ namespace PrimeConsoleCore
                 }
             }
             Program.pass = Program.sha256_hash(Program.pass);
-            using (var client = new WebClient())
+            try
             {
-                var values = new NameValueCollection();
-                values["username"] = Program.user;
-                values["password"] = Program.pass;
-                Program.resultToken = Encoding.Default.GetString(client.UploadValues("http://prime.steph.ml/login_token.php", values));
+                using (var client = new WebClient())
+                {
+                    var values = new NameValueCollection();
+                    values["username"] = Program.user;
+                    values["password"] = Program.pass;
+                    Program.resultToken = Encoding.Default.GetString(client.UploadValues("http://prime.steph.ml/login_token.php", values));
+                }
+                Program.resultToken = Program.resultToken.Replace("&quot;", "\"");
+                Program.userconfig = JsonConvert.DeserializeObject<Dictionary<string, string>>(Program.resultToken);
             }
-            Program.resultToken = Program.resultToken.Replace("&quot;", "\"");
-            Program.userconfig = JsonConvert.DeserializeObject<Dictionary<string, string>>(Program.resultToken);
+            catch(System.Net.WebException)
+            {
+                fail = "No connection to http://prime.steph.ml/! Check your internet settings or\n   try again later.";
+                Program.pass = "";
+                Console.Clear();
+                login();
+            }
             if (Program.userconfig["token"] != "false")
             {
                 Program.zahl = BigInteger.Parse(Program.userconfig["prime"]);
