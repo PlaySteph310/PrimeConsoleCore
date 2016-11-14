@@ -23,6 +23,7 @@ namespace PrimeConsoleCore
                 Program.config.Add("prime_found", "true");
                 Program.config.Add("welcome_message", "true");
                 Program.config.Add("version", Program.version);
+                Program.config.Add("link", "http://stephchan.w4f.eu/");
                 if (Directory.Exists(Environment.ExpandEnvironmentVariables(Program.ParsePath(@"%localappdata%\\PCC\"))))
                 {
 
@@ -56,6 +57,13 @@ namespace PrimeConsoleCore
             else
             {
                 Program.config.Add("prime_found", "true");
+            }
+            if (Program.config.ContainsKey("link"))
+            {
+            }
+            else
+            {
+                Program.config.Add("link", "http://stephchan.w4f.eu/");
             }
             if (Program.config.ContainsKey("version"))
             {

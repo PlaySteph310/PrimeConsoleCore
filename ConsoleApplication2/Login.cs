@@ -57,8 +57,7 @@ namespace PrimeConsoleCore
                 {
                     var values = new NameValueCollection();
                     values["username"] = Program.user;
-                    values["password"] = Program.pass;
-                    Program.resultToken = Encoding.Default.GetString(client.UploadValues("http://prime.steph.ml/login_token.php", values));
+                    Program.resultToken = Encoding.Default.GetString(client.UploadValues(Program.config["link"]+"prime/login_token.php", values));
                 }
                 Program.resultToken = Program.resultToken.Replace("&quot;", "\"");
                 Program.userconfig = JsonConvert.DeserializeObject<Dictionary<string, string>>(Program.resultToken);
@@ -70,11 +69,40 @@ namespace PrimeConsoleCore
                 Console.Clear();
                 login();
             }
-            if (Program.userconfig["token"] != "false")
+            if (Program.userconfig["check"] == "true" && Program.userconfig["online"] == "false")
             {
-                Program.zahl = BigInteger.Parse(Program.userconfig["prime"]);
-                Console.Clear();
-                Program.start();
+                Console.WriteLine("Works! Login on http://stephchan.wf4.eu/prime/ and activate the session.");
+                bool check = false;
+                while(check == false)
+                {
+                    System.Threading.Thread.Sleep(5000);
+                    try
+                    {
+                        using (var client = new WebClient())
+                        {
+                            var values = new NameValueCollection();
+                            values["username"] = Program.user;
+                            Program.resultToken = Encoding.Default.GetString(client.UploadValues(Program.config["link"] + "prime/login_token.php", values));
+                        }
+                        Program.resultToken = Program.resultToken.Replace("&quot;", "\"");
+                        Program.userconfig.Clear();
+                        Program.userconfig = JsonConvert.DeserializeObject<Dictionary<string, string>>(Program.resultToken);
+                        if(Program.userconfig["online"] == "true" && Program.userconfig["check"] == "true")
+                        {
+                            check = true;
+                        }
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
+                }
+                if(check == true)
+                {
+                    Program.zahl = BigInteger.Parse(Program.userconfig["calculated"]);
+                    Console.Clear();
+                    Program.start();
+                }
             }
             else
             {

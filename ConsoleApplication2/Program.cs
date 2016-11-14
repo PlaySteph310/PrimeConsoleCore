@@ -33,7 +33,7 @@ namespace PrimeConsoleCore
         public static string pass = "";
         public static string token = "";
         public static string resultToken = "";
-        public static string version = "0.0.8.1";
+        public static string version = "0.0.8.2";
         // Bools
         public static bool visible = true;
 
@@ -62,7 +62,7 @@ namespace PrimeConsoleCore
         public static extern bool Beep(int Frequenz, int Dauer);
         public static void SendPrimes()
         {
-            while (true)
+            /*while (true)
             {
                 Dictionary<string, string> sendprimes = new Dictionary<string, string>();
                 string result = "";
@@ -92,7 +92,7 @@ namespace PrimeConsoleCore
                     Console.WriteLine(" >> Primes were not send to the server!");
                 }
                 System.Threading.Thread.Sleep(120000);
-            }
+            }*/
 
         }
 
@@ -120,7 +120,6 @@ namespace PrimeConsoleCore
                 Console.Clear();
             }
             Login.login();
-            token = userconfig["token"];
             threads = Environment.ProcessorCount;
             for (int i = 0; i < threads; i++ )
             {
