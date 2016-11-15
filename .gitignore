@@ -34,6 +34,11 @@ $RECYCLE.BIN/
 # Files that might appear on external disk
 .Spotlight-V100
 .Trashes
+.vs
+.gitattributes
+.gitignore
+ConsoleApplication2/bin/
+ConsoleApplication2/obj/
 
 # Directories potentially created on remote AFP share
 .AppleDB
