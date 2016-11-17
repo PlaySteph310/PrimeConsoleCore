@@ -22,11 +22,13 @@ namespace PrimeConsoleCore
     public class Program
     {
         /* Variables */
+        /* Testing Stuff */
+        private static EventWaitHandle wh = new AutoResetEvent(true);
         // Numbers
         public static BigInteger zahl = 1;
         //public static BigInteger zähler = 2;
         public static BigInteger anzahl = 0;
-        public static BigInteger primzahl = 1;
+        public static BigInteger primzahl = 0;
         public static int threads = 0;
         // Text
         public static string user = "";
@@ -37,6 +39,8 @@ namespace PrimeConsoleCore
         // Bools
         public static bool visible = true;
         public static bool läuft = false;
+        public static bool stop = false;
+        public static bool läuft2 = false;
 
         /* Dictionarys */
         public static Dictionary<string, string> config = new Dictionary<string, string>();
@@ -89,20 +93,11 @@ namespace PrimeConsoleCore
                 Thread.Sleep(1000);
                 Console.Clear();
             }
-            Login.login();
+            //ogin.login();
             threads = Environment.ProcessorCount;
-            rechner.Start();
-            /*for (int i = 0; i < threads; i++ )
-            {
-                bthreads[i] = new Thread(new ThreadStart(berechnung));
-            }*/
-            /*Parallel.Invoke(() =>
+            Parallel.Invoke(() =>
                  {
-                     for (int i = 0; i < threads; i++)
-                     {
-                         bthreads[i].Start();
-                     }
-                     rechner.Start();
+                     berechnung();
                  },
                  () =>
                  {
@@ -112,8 +107,7 @@ namespace PrimeConsoleCore
                  {
                      send.Start();
                  }
-                );*/
-            //pause.Start();
+                );
         }
         public static void sendprimesperbutton()
         {
@@ -157,10 +151,9 @@ namespace PrimeConsoleCore
         }
         public static void stoppen ()
         {
-            for (int i = 0; i < threads; i++)
-            {
-                bthreads[i].Suspend();
-            }
+            //rechner.Suspend();
+            stop = true;
+            wh.Reset();
             Console.WriteLine("");
             Console.WriteLine("  ╔══════════════════════════════════════════════════════════════════════════╗");
             Console.WriteLine("  ║                                                                          ║");
@@ -169,136 +162,74 @@ namespace PrimeConsoleCore
             Console.WriteLine("  ╚══════════════════════════════════════════════════════════════════════════╝");
             Console.WriteLine("");
             Console.WriteLine(" >> Number of founded primes: "+anzahl);
-            Console.WriteLine(" >> Current prime: " + zahl);
+            Console.WriteLine(" >> Current prime: " + primzahl);
             Console.ReadLine();
-            for (int i = 0; i < threads; i++)
-            {
-                bthreads[i].Resume();
-            }
+            //rechner.Resume();
+            stop = false;
+            wh.Set();
             taste();
         }
         public static void berechnung ()
         {
-            //BigInteger[] vorgegebenezahlen = new BigInteger[Environment.ProcessorCount];
-            zahl = 2;
+            zahl = 1000000;
             List<BigInteger> vorgegebenezahlen = new List<BigInteger>();
+            EventWaitHandle waithandle = new AutoResetEvent(true);
             for (int i = 0; i < Environment.ProcessorCount; i++)
             {
                 vorgegebenezahlen.Add(zahl);
+                Console.WriteLine(zahl);
                 zahl++;
             }
-            /*while (true)
+            for (int i = 0; i < Environment.ProcessorCount; i++)
             {
-                BigInteger zahl3 = vorgegebenezahlen.ElementAt(0);
-                vorgegebenezahlen.Remove(vorgegebenezahlen.ElementAt(0));
-                vorgegebenezahlen.Add(vorgegebenezahlen.ElementAt(Environment.ProcessorCount - 2) + 1);
-                bool checking = prüfediezahl(zahl3);
-                if (checking == true)
-                {
-                    Console.WriteLine(" >> Prime found!! " + zahl3);
-                }
-            }*/
+
+            }
             try
             {
-                Parallel.Invoke(() =>
-                {
-                    while (true)
+                Parallel.For(0, Environment.ProcessorCount,
+                    once =>
                     {
-                        BigInteger zahl3 = vorgegebenezahlen.ElementAt(0);
-                        if(läuft == true)
+                        while (true)
                         {
-                            while(läuft == true)
+                            if (stop == true)
                             {
-                                System.Threading.Thread.Sleep(1);
+                                wh.WaitOne();
+                            }
+                            BigInteger zahl3 = vorgegebenezahlen.ElementAt(0);
+                            if (läuft == true)
+                            {
+                                while (läuft == true)
+                                {
+                                    System.Threading.Thread.Sleep(1);
+                                }
+                            }
+                            läuft = true;
+                            vorgegebenezahlen.Remove(vorgegebenezahlen.ElementAt(0));
+                            vorgegebenezahlen.Add(vorgegebenezahlen.ElementAt(Environment.ProcessorCount - 2) + 1);
+                            läuft = false;
+                            bool checking = prüfediezahl(zahl3);
+                            if (checking == true)
+                            {
+                                if(primzahl < zahl3)
+                                {
+                                    if (läuft2 == true)
+                                    {
+                                        while (läuft2 == true)
+                                        {
+                                            System.Threading.Thread.Sleep(1);
+                                        }
+                                    }
+                                    läuft2 = true;
+                                    primzahl = zahl3;
+                                    läuft2 = false;
+                                }
+                                Console.WriteLine(" >> Prime found!! " + zahl3);
                             }
                         }
-                        läuft = true;
-                        vorgegebenezahlen.Remove(vorgegebenezahlen.ElementAt(0));
-                        vorgegebenezahlen.Add(vorgegebenezahlen.ElementAt(Environment.ProcessorCount - 2) + 1);
-                        läuft = false;
-                        bool checking = prüfediezahl(zahl3);
-                        if (checking == true)
-                        {
-                            Console.WriteLine(" >> Prime found!! " + zahl3);
-                        }
                     }
-
-                },
-     () =>
-     {
-         System.Threading.Thread.Sleep(10);
-         while (true)
-         {
-             BigInteger zahl3 = vorgegebenezahlen.ElementAt(0);
-             if (läuft == true)
-             {
-                 while (läuft == true)
-                 {
-                     System.Threading.Thread.Sleep(1);
-                 }
-             }
-             läuft = true;
-             vorgegebenezahlen.Remove(vorgegebenezahlen.ElementAt(0));
-             vorgegebenezahlen.Add(vorgegebenezahlen.ElementAt(Environment.ProcessorCount - 2) + 1);
-             läuft = false;
-             bool checking = prüfediezahl(zahl3);
-             if (checking == true)
-             {
-                 Console.WriteLine(" >> Prime found!! " + zahl3);
-             }
-         }
-     },
-     () =>
-     {
-         System.Threading.Thread.Sleep(20);
-         while (true)
-         {
-             BigInteger zahl3 = vorgegebenezahlen.ElementAt(0);
-             if (läuft == true)
-             {
-                 while (läuft == true)
-                 {
-                     System.Threading.Thread.Sleep(1);
-                 }
-             }
-             läuft = true;
-             vorgegebenezahlen.Remove(vorgegebenezahlen.ElementAt(0));
-             vorgegebenezahlen.Add(vorgegebenezahlen.ElementAt(Environment.ProcessorCount - 2) + 1);
-             läuft = false;
-             bool checking = prüfediezahl(zahl3);
-             if (checking == true)
-             {
-                 Console.WriteLine(" >> Prime found!! " + zahl3);
-             }
-         }
-     },
-     () =>
-     {
-         System.Threading.Thread.Sleep(30);
-         while (true)
-         {
-             BigInteger zahl3 = vorgegebenezahlen.ElementAt(0);
-             if (läuft == true)
-             {
-                 while (läuft == true)
-                 {
-                     System.Threading.Thread.Sleep(1);
-                 }
-             }
-             läuft = true;
-             vorgegebenezahlen.Remove(vorgegebenezahlen.ElementAt(0));
-             vorgegebenezahlen.Add(vorgegebenezahlen.ElementAt(Environment.ProcessorCount - 2) + 1);
-             läuft = false;
-             bool checking = prüfediezahl(zahl3);
-             if (checking == true)
-             {
-                 Console.WriteLine(" >> Prime found!! " + zahl3);
-             }
-         }
-     }
-    );
+                    );
             }
-            catch(AggregateException e)
+            catch (AggregateException e)
             {
                 Console.WriteLine(e);
                 Console.ReadLine();
@@ -310,6 +241,10 @@ namespace PrimeConsoleCore
             bool rechnet = true;
             while (rechnet == true)
             {
+                if (stop == true)
+                {
+                    wh.WaitOne();
+                }
                 if (ziffer % teiler == 0 && ziffer != 1)
                 {
                     if (ziffer == teiler)
@@ -318,8 +253,6 @@ namespace PrimeConsoleCore
                     }
                     else
                     {
-                        //ziffer++;
-                        //teiler = 2;
                         return false;
                     }
                 }
@@ -327,7 +260,7 @@ namespace PrimeConsoleCore
                 {
                     teiler++;
                 }
-                if (zahl == 1)
+                if (ziffer == 1)
                 {
                     ziffer++;
                     teiler = 2;
