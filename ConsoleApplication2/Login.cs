@@ -57,7 +57,7 @@ namespace PrimeConsoleCore
                 {
                     var values = new NameValueCollection();
                     values["username"] = Program.user;
-                    Program.resultToken = Encoding.Default.GetString(client.UploadValues(Program.config["link"]+"prime/login_token.php", values));
+                    Program.resultToken = Encoding.Default.GetString(client.UploadValues(Program.config["link"]+"prime/client_login.php", values));
                 }
                 Program.resultToken = Program.resultToken.Replace("&quot;", "\"");
                 Program.userconfig = JsonConvert.DeserializeObject<Dictionary<string, string>>(Program.resultToken);
@@ -69,7 +69,7 @@ namespace PrimeConsoleCore
                 Console.Clear();
                 login();
             }
-            if (Program.userconfig["check"] == "true" && Program.userconfig["online"] == "false")
+            if ((Program.userconfig["check"] == "true" && Program.userconfig["online"] == "false" )||(Program.userconfig["check"] == "true" && Program.userconfig["online"] == "true"))
             {
                 Console.WriteLine("Works! Login on http://stephchan.wf4.eu/prime/ and activate the session.");
                 bool check = false;
@@ -82,7 +82,7 @@ namespace PrimeConsoleCore
                         {
                             var values = new NameValueCollection();
                             values["username"] = Program.user;
-                            Program.resultToken = Encoding.Default.GetString(client.UploadValues(Program.config["link"] + "prime/login_token.php", values));
+                            Program.resultToken = Encoding.Default.GetString(client.UploadValues(Program.config["link"] + "prime/client_login.php", values));
                         }
                         Program.resultToken = Program.resultToken.Replace("&quot;", "\"");
                         Program.userconfig.Clear();
@@ -90,6 +90,7 @@ namespace PrimeConsoleCore
                         if(Program.userconfig["online"] == "true" && Program.userconfig["check"] == "true")
                         {
                             check = true;
+
                         }
                     }
                     catch(Exception e)
@@ -99,7 +100,7 @@ namespace PrimeConsoleCore
                 }
                 if(check == true)
                 {
-                    Program.zahl = BigInteger.Parse(Program.userconfig["calculated"]);
+                    Program.zahl = BigInteger.Parse(Program.userconfig["prime"]);
                     Console.Clear();
                     Program.start();
                 }

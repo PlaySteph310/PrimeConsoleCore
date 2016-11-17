@@ -36,6 +36,7 @@ namespace PrimeConsoleCore
         public static string version = "0.0.8.2";
         // Bools
         public static bool visible = true;
+        public static bool läuft = false;
 
         /* Dictionarys */
         public static Dictionary<string, string> config = new Dictionary<string, string>();
@@ -43,6 +44,7 @@ namespace PrimeConsoleCore
 
         /* Threads */
         public static Thread pause = new Thread(new ThreadStart(stoppen));
+        public static Thread rechner = new Thread(new ThreadStart(berechnung));
         //public static Thread berechnungthread = new Thread(new ThreadStart(berechnung));
         public static Thread tastethread = new Thread(new ThreadStart(taste));
         public static Thread send = new Thread(new ThreadStart(SendPrimes));
@@ -62,38 +64,6 @@ namespace PrimeConsoleCore
         public static extern bool Beep(int Frequenz, int Dauer);
         public static void SendPrimes()
         {
-            /*while (true)
-            {
-                Dictionary<string, string> sendprimes = new Dictionary<string, string>();
-                string result = "";
-                using (var client = new WebClient())
-                {
-                    var values = new NameValueCollection();
-                    values["username"] = Program.user;
-                    values["password"] = Program.pass;
-                    values["token"] = Program.token;
-                    values["prime"] = Convert.ToString(Program.zahl);
-                    result = Encoding.Default.GetString(client.UploadValues("http://prime.steph.ml/sendprime.php", values)); ;
-                }
-                result = result.Replace("&quot;", "\"");
-                sendprimes = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
-                if (sendprimes["send"] == "true")
-                {
-                    Console.WriteLine(" >> Primes were send to the server.");
-                }
-                else if (sendprimes["send"] == "false")
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(" >> Primes were not send to the server!");
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                }
-                else
-                {
-                    Console.WriteLine(" >> Primes were not send to the server!");
-                }
-                System.Threading.Thread.Sleep(120000);
-            }*/
-
         }
 
         /* Main*/
@@ -121,17 +91,18 @@ namespace PrimeConsoleCore
             }
             Login.login();
             threads = Environment.ProcessorCount;
-            for (int i = 0; i < threads; i++ )
+            rechner.Start();
+            /*for (int i = 0; i < threads; i++ )
             {
                 bthreads[i] = new Thread(new ThreadStart(berechnung));
-            }
-            Parallel.Invoke(() =>
+            }*/
+            /*Parallel.Invoke(() =>
                  {
-                     //berechnungthread.Start();
                      for (int i = 0; i < threads; i++)
                      {
                          bthreads[i].Start();
                      }
+                     rechner.Start();
                  },
                  () =>
                  {
@@ -141,8 +112,48 @@ namespace PrimeConsoleCore
                  {
                      send.Start();
                  }
-                );
+                );*/
             //pause.Start();
+        }
+        public static void sendprimesperbutton()
+        {
+            for (int i = 0; i < threads; i++)
+            {
+                bthreads[i].Suspend();
+            }
+            Dictionary<string, string> sendprimes = new Dictionary<string, string>();
+            string result = "";
+            using (var client = new WebClient())
+            {
+                var values = new NameValueCollection();
+                values["username"] = Program.user;
+                values["token"] = Program.token;
+                values["prime"] = Convert.ToString(Program.zahl);
+                //values["number_calculated"] = Convert.ToString(Program.zähler);
+                result = Encoding.Default.GetString(client.UploadValues(Program.config["link"] + "prime/client_sendprimes.php", values)); ;
+            }
+            result = result.Replace("&quot;", "\"");
+            sendprimes = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
+            if (sendprimes["send"] == "true")
+            {
+                Program.token = sendprimes["token"];
+                Console.WriteLine(" >> Primes were send to the server.");
+            }
+            else if (sendprimes["send"] == "false")
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(" >> Primes were not send to the server! (1)");
+                Console.ForegroundColor = ConsoleColor.Gray;
+            }
+            else
+            {
+                Console.WriteLine(" >> Primes were not send to the server! (2)");
+            }
+            for (int i = 0; i < threads; i++)
+            {
+                bthreads[i].Resume();
+            }
+            taste();
         }
         public static void stoppen ()
         {
@@ -168,43 +179,161 @@ namespace PrimeConsoleCore
         }
         public static void berechnung ()
         {
-            //BigInteger zahl = 1;
-            BigInteger zähler = 2;
-            while (true)
+            //BigInteger[] vorgegebenezahlen = new BigInteger[Environment.ProcessorCount];
+            zahl = 2;
+            List<BigInteger> vorgegebenezahlen = new List<BigInteger>();
+            for (int i = 0; i < Environment.ProcessorCount; i++)
             {
-                if (zahl % zähler == 0 && zahl != 1)
+                vorgegebenezahlen.Add(zahl);
+                zahl++;
+            }
+            /*while (true)
+            {
+                BigInteger zahl3 = vorgegebenezahlen.ElementAt(0);
+                vorgegebenezahlen.Remove(vorgegebenezahlen.ElementAt(0));
+                vorgegebenezahlen.Add(vorgegebenezahlen.ElementAt(Environment.ProcessorCount - 2) + 1);
+                bool checking = prüfediezahl(zahl3);
+                if (checking == true)
                 {
-                    if (zahl == zähler)
+                    Console.WriteLine(" >> Prime found!! " + zahl3);
+                }
+            }*/
+            try
+            {
+                Parallel.Invoke(() =>
+                {
+                    while (true)
                     {
-                        anzahl++;
-                        if(config["prime_found"] == "true" && visible == true)
+                        BigInteger zahl3 = vorgegebenezahlen.ElementAt(0);
+                        if(läuft == true)
                         {
-                            Console.WriteLine(" >> Prime found!! (" + anzahl + "): " + zahl);
-                            if (config["sound"] == "true")
+                            while(läuft == true)
                             {
-                                //Beep(1000, 500);
+                                System.Threading.Thread.Sleep(1);
                             }
                         }
-                        primzahl++;
-                        zahl++;
-                        zähler = 2;
+                        läuft = true;
+                        vorgegebenezahlen.Remove(vorgegebenezahlen.ElementAt(0));
+                        vorgegebenezahlen.Add(vorgegebenezahlen.ElementAt(Environment.ProcessorCount - 2) + 1);
+                        läuft = false;
+                        bool checking = prüfediezahl(zahl3);
+                        if (checking == true)
+                        {
+                            Console.WriteLine(" >> Prime found!! " + zahl3);
+                        }
+                    }
+
+                },
+     () =>
+     {
+         System.Threading.Thread.Sleep(10);
+         while (true)
+         {
+             BigInteger zahl3 = vorgegebenezahlen.ElementAt(0);
+             if (läuft == true)
+             {
+                 while (läuft == true)
+                 {
+                     System.Threading.Thread.Sleep(1);
+                 }
+             }
+             läuft = true;
+             vorgegebenezahlen.Remove(vorgegebenezahlen.ElementAt(0));
+             vorgegebenezahlen.Add(vorgegebenezahlen.ElementAt(Environment.ProcessorCount - 2) + 1);
+             läuft = false;
+             bool checking = prüfediezahl(zahl3);
+             if (checking == true)
+             {
+                 Console.WriteLine(" >> Prime found!! " + zahl3);
+             }
+         }
+     },
+     () =>
+     {
+         System.Threading.Thread.Sleep(20);
+         while (true)
+         {
+             BigInteger zahl3 = vorgegebenezahlen.ElementAt(0);
+             if (läuft == true)
+             {
+                 while (läuft == true)
+                 {
+                     System.Threading.Thread.Sleep(1);
+                 }
+             }
+             läuft = true;
+             vorgegebenezahlen.Remove(vorgegebenezahlen.ElementAt(0));
+             vorgegebenezahlen.Add(vorgegebenezahlen.ElementAt(Environment.ProcessorCount - 2) + 1);
+             läuft = false;
+             bool checking = prüfediezahl(zahl3);
+             if (checking == true)
+             {
+                 Console.WriteLine(" >> Prime found!! " + zahl3);
+             }
+         }
+     },
+     () =>
+     {
+         System.Threading.Thread.Sleep(30);
+         while (true)
+         {
+             BigInteger zahl3 = vorgegebenezahlen.ElementAt(0);
+             if (läuft == true)
+             {
+                 while (läuft == true)
+                 {
+                     System.Threading.Thread.Sleep(1);
+                 }
+             }
+             läuft = true;
+             vorgegebenezahlen.Remove(vorgegebenezahlen.ElementAt(0));
+             vorgegebenezahlen.Add(vorgegebenezahlen.ElementAt(Environment.ProcessorCount - 2) + 1);
+             läuft = false;
+             bool checking = prüfediezahl(zahl3);
+             if (checking == true)
+             {
+                 Console.WriteLine(" >> Prime found!! " + zahl3);
+             }
+         }
+     }
+    );
+            }
+            catch(AggregateException e)
+            {
+                Console.WriteLine(e);
+                Console.ReadLine();
+            }
+        }
+        public static bool prüfediezahl (BigInteger ziffer)
+        {
+            BigInteger teiler = 2;
+            bool rechnet = true;
+            while (rechnet == true)
+            {
+                if (ziffer % teiler == 0 && ziffer != 1)
+                {
+                    if (ziffer == teiler)
+                    {
+                        return true;
                     }
                     else
                     {
-                        zahl++;
-                        zähler = 2;
+                        //ziffer++;
+                        //teiler = 2;
+                        return false;
                     }
                 }
                 else
                 {
-                    zähler++;
+                    teiler++;
                 }
                 if (zahl == 1)
                 {
-                    zahl++;
-                    zähler = 2;
+                    ziffer++;
+                    teiler = 2;
                 }
             }
+            return false;
         }
         public static void taste()
         {
@@ -225,6 +354,9 @@ namespace PrimeConsoleCore
                     hilfe();
                     visible = true;
                     taste();
+                    break;
+                case ConsoleKey.S:
+                    sendprimesperbutton();
                     break;
                 default:
                     taste();
