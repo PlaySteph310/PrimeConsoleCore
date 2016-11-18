@@ -17,3 +17,17 @@ C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\ConsoleApplication2\obj\x64\D
 C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\bin\x64\Debug\PrimeConsoleCore.exe.config
 C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\obj\x64\Debug\PrimeConsoleCore.exe
 C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\obj\x64\Debug\PrimeConsoleCore.pdb
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\bin\x64\Debug\PrimeConsoleCore.exe.manifest
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\bin\x64\Debug\PrimeConsoleCore.application
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\bin\x64\Debug\PrimeConsoleCore.exe
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\bin\x64\Debug\PrimeConsoleCore.pdb
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\bin\x64\Debug\Newtonsoft.Json.dll
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\bin\x64\Debug\System.Net.Http.Extensions.dll
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\bin\x64\Debug\System.Net.Http.Primitives.dll
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\bin\x64\Debug\Newtonsoft.Json.xml
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\bin\x64\Debug\System.Net.Http.Extensions.xml
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\bin\x64\Debug\System.Net.Http.Primitives.xml
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\obj\x64\Debug\PrimeConsoleCore.csproj.App.config
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\obj\x64\Debug\PrimeConsoleCore.csprojResolveAssemblyReference.cache
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\obj\x64\Debug\PrimeConsoleCore.exe.manifest
+C:\Users\Stephan\Documents\GitHub\PrimeConsoleCore\PrimeConsoleCore\obj\x64\Debug\PrimeConsoleCore.application

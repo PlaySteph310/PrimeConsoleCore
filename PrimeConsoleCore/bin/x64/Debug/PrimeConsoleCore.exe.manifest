@@ -55,14 +55,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="PrimeConsoleCore.exe" size="53704">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="PrimeConsoleCore.exe" size="53192">
       <assemblyIdentity name="PrimeConsoleCore" version="1.0.0.0" language="neutral" processorArchitecture="amd64" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>+Na72Z//gMXoLPHReOv/f06uqbwu+3QT55AkBciHegY=</dsig:DigestValue>
+        <dsig:DigestValue>5XjCXP4KwYLWthCU76uiG3Sqw3yik0GG0cRM4sQ51Jw=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

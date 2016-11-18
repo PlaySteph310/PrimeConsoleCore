@@ -51,7 +51,7 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>pcc.ico</ApplicationIcon>
+    <ApplicationIcon>favicon_prime.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -120,6 +120,7 @@
     <None Include="PrimeConsoleCore_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="favicon_prime.ico" />
     <Content Include="pcc.ico" />
   </ItemGroup>
   <ItemGroup>

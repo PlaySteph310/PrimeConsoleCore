@@ -23,6 +23,10 @@ namespace PrimeConsoleCore
             Console.WriteLine("  ║                                                                          ║");
             Console.WriteLine("  ╚══════════════════════════════════════════════════════════════════════════╝");
             Console.WriteLine("");
+            if (Program.config["username"] != "" && fail != "")
+            {
+                Program.user = Program.config["username"];
+            }
             if (fail != "")
             {
                 Console.ForegroundColor = ConsoleColor.DarkRed;
@@ -61,11 +65,13 @@ namespace PrimeConsoleCore
                 fail = "   Please enter a username. \n";
                 Program.pass = "";
                 Console.Clear();
+                login();
             }
             if(Program.pass == "")
             {
                 fail = fail + "   Please enter a password. \n";
                 Console.Clear();
+                login();
             }
             if (fail == "")
             {
@@ -145,13 +151,18 @@ namespace PrimeConsoleCore
                     }
                     if (check == true)
                     {
+                        if (Program.config["username"] == "")
+                        {
+                            Program.config["username"] = Program.user;
+                            System.IO.File.WriteAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Program.ParsePath(@"%localappdata%\\PCC\config.json")), JsonConvert.SerializeObject(Program.config, Formatting.Indented));
+                        }
                         Program.zahl = BigInteger.Parse(Program.userconfig["prime"]);
+                        Program.token = Program.userconfig["token"];
                         Console.Clear();
                         Program.start();
                     }
                 }
             }
-            login();
         }
         public static Dictionary<string, string> connect(string url, Dictionary<string, string> values)
             {

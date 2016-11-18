@@ -22,11 +22,9 @@ namespace PrimeConsoleCore
     public class Program
     {
         /* Variables */
-        /* Testing Stuff */
         private static EventWaitHandle[] waithandle = new AutoResetEvent[Environment.ProcessorCount];
         // Numbers
         public static BigInteger zahl = 1;
-        //public static BigInteger zähler = 2;
         public static BigInteger anzahl = 0;
         public static BigInteger primzahl = 0;
         public static int threads = 0;
@@ -34,7 +32,6 @@ namespace PrimeConsoleCore
         public static string user = "";
         public static string pass = "";
         public static string token = "";
-        public static string resultToken = "";
         public static string version = "0.9.1";
         // Bools
         public static bool visible = true;
@@ -47,9 +44,7 @@ namespace PrimeConsoleCore
         public static Dictionary<string, string> userconfig = new Dictionary<string, string>();
 
         /* Threads */
-        public static Thread pause = new Thread(new ThreadStart(stoppen));
         public static Thread tastethread = new Thread(new ThreadStart(taste));
-        public static Thread send = new Thread(new ThreadStart(SendPrimes));
 
         /* %directorypath% by Jonathan */
         public static string ParsePath(string path) //function by dr4yyee
@@ -63,9 +58,6 @@ namespace PrimeConsoleCore
         /* Beepsound */
         [DllImport("kernel32.dll")]
         public static extern bool Beep(int Frequenz, int Dauer);
-        public static void SendPrimes()
-        {
-        }
 
         /* Main*/
         public static void Main()
@@ -99,34 +91,31 @@ namespace PrimeConsoleCore
                  () =>
                  {
                      tastethread.Start();
-                 },
-                 () =>
-                 {
-                     send.Start();
                  }
                 );
         }
         public static void sendprimesperbutton()
         {
-            Dictionary<string, string> sendprimes = new Dictionary<string, string>();
-            string result = "";
-            using (var client = new WebClient())
+            Dictionary<string, string> sendprimes_values = new Dictionary<string, string>();
+            try
             {
-                var values = new NameValueCollection();
-                values["username"] = Program.user;
-                values["token"] = Program.token;
-                values["prime"] = Convert.ToString(Program.zahl);
-                //values["number_calculated"] = Convert.ToString(Program.zähler);
-                result = Encoding.Default.GetString(client.UploadValues(Program.config["link"] + "prime/client_sendprimes.php", values)); ;
+                Dictionary<string, string> values = new Dictionary<string, string>();
+                values.Add("username",Program.user);
+                values.Add("token", Program.token);
+                values.Add("prime", Convert.ToString(primzahl));
+                sendprimes_values = Login.connect(Program.config["link"] + "prime/client_sendprimes.php", values);
             }
-            result = result.Replace("&quot;", "\"");
-            sendprimes = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
-            if (sendprimes["send"] == "true")
+            catch (Exception e)
             {
-                Program.token = sendprimes["token"];
+                Console.WriteLine(Convert.ToString(e));
+                Console.ReadLine();
+            }
+            if (sendprimes_values["send"] == "true")
+            {
+                Program.token = sendprimes_values["token"];
                 Console.WriteLine(" >> Primes were send to the server.");
             }
-            else if (sendprimes["send"] == "false")
+            else if (sendprimes_values["send"] == "false")
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(" >> Primes were not send to the server! (1)");
@@ -136,7 +125,6 @@ namespace PrimeConsoleCore
             {
                 Console.WriteLine(" >> Primes were not send to the server! (2)");
             }
-            taste();
         }
         public static void stoppen ()
         {
@@ -154,6 +142,7 @@ namespace PrimeConsoleCore
             Console.WriteLine("");
             Console.WriteLine(" >> Number of founded primes: "+anzahl);
             Console.WriteLine(" >> Current prime: " + primzahl);
+            sendprimesperbutton();
             Console.ReadLine();
             stop = false;
             for (int i = 0; i < Environment.ProcessorCount; i++)
@@ -168,7 +157,6 @@ namespace PrimeConsoleCore
         }
         public static void berechnung ()
         {
-            zahl = 1000000;
             List<BigInteger> vorgegebenezahlen = new List<BigInteger>();
             for (int i = 0; i < Environment.ProcessorCount; i++)
             {
@@ -219,7 +207,10 @@ namespace PrimeConsoleCore
                                     primzahl = zahl3;
                                     läuft2 = false;
                                 }
-                                Console.WriteLine(" >> Prime found!! " + zahl3);
+                                if (visible == true)
+                                {
+                                    Console.WriteLine(" >> Prime found!! " + zahl3);
+                                }
                             }
                         }
                     }
@@ -286,6 +277,7 @@ namespace PrimeConsoleCore
                     break;
                 case ConsoleKey.S:
                     sendprimesperbutton();
+                    taste();
                     break;
                 default:
                     taste();
@@ -439,21 +431,6 @@ namespace PrimeConsoleCore
                 default:
                     break;
             }
-        }
-        public static String sha256_hash(String value)
-        {
-            StringBuilder Sb = new StringBuilder();
-
-            using (SHA256 hash = SHA256Managed.Create())
-            {
-                Encoding enc = Encoding.UTF8;
-                Byte[] result = hash.ComputeHash(enc.GetBytes(value));
-
-                foreach (Byte b in result)
-                    Sb.Append(b.ToString("x2"));
-            }
-
-            return Sb.ToString();
         }
     }
 }
