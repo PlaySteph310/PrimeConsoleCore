@@ -9,21 +9,24 @@ namespace PrimeConsoleCore
     {
         public static void checkfiles()
         {
+            var checkconfig = new Dictionary<string, string>();
+            checkconfig.Add("sound", "true");
+            checkconfig.Add("prime_found", "true");
+            checkconfig.Add("welcome_message", "true");
+            checkconfig.Add("version", Program.version);
+            checkconfig.Add("link", "http://stephchan.w4f.eu/");
+            checkconfig.Add("username", "");
             if (File.Exists(Environment.ExpandEnvironmentVariables(Program.ParsePath(@"%localappdata%\\PCC\config.json"))))
             {
                 StreamReader configread = new StreamReader(Program.ParsePath(@"%localappdata%\\PCC\config.json"));
                 Program.config = JsonConvert.DeserializeObject<Dictionary<string, string>>(configread.ReadToEnd());
                 configread.Close();
-                checkkeys();
+                checkkeys(checkconfig);
+                File.WriteAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Program.ParsePath(@"%localappdata%\\PCC\config.json")), JsonConvert.SerializeObject(Program.config, Formatting.Indented));
             }
             else
             {
-                Program.config.Add("sound", "true");
-                Program.config.Add("prime_found", "true");
-                Program.config.Add("welcome_message", "true");
-                Program.config.Add("version", Program.version);
-                Program.config.Add("link", "http://stephchan.w4f.eu/");
-                Program.config.Add("username", "");
+                checkkeys(checkconfig);
                 if (!Directory.Exists(Environment.ExpandEnvironmentVariables(Program.ParsePath(@"%localappdata%\\PCC\"))))
                 {
                     Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Program.ParsePath(@"%localappdata%\\PCC\")));
@@ -31,33 +34,19 @@ namespace PrimeConsoleCore
                 File.WriteAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Program.ParsePath(@"%localappdata%\\PCC\config.json")), JsonConvert.SerializeObject(Program.config, Formatting.Indented));
             }
         }
-        public static void checkkeys()
+        public static void checkkeys(Dictionary<string, string> fill)
         {
-            if (!Program.config.ContainsKey("welcome_message"))
+            foreach(var item in fill)
             {
-                Program.config.Add("welcome_message", "true");
+                if(!Program.config.ContainsKey(item.Key))
+                {
+                    Program.config.Add(item.Key, item.Value);
+                }
             }
-            if (!Program.config.ContainsKey("sound"))
+            if(Program.config["version"] != Program.version)
             {
-                Program.config.Add("sound", "true");
+                Program.config["version"] = Program.version;
             }
-            if (!Program.config.ContainsKey("prime_found"))
-            {
-                Program.config.Add("prime_found", "true");
-            }
-            if (!Program.config.ContainsKey("link"))
-            {
-                Program.config.Add("link", "http://stephchan.w4f.eu/");
-            }
-            if (!Program.config.ContainsKey("version"))
-            {
-                Program.config.Add("version", Program.version);
-            }
-            if (!Program.config.ContainsKey("username"))
-            {
-                Program.config.Add("username", "");
-            }
-            File.WriteAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Program.ParsePath(@"%localappdata%\\PCC\config.json")), JsonConvert.SerializeObject(Program.config, Formatting.Indented));
         }
     }
 }

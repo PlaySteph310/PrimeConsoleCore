@@ -2,20 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.IO;
 using Newtonsoft.Json;
-using System.Security.Principal;
-using System.Security.Permissions;
 using System.Numerics;
-using System.Security.Cryptography;
-using System.Net.Http;
-using System.Collections.Specialized;
 using System.Runtime.InteropServices;
-using System.Windows.Forms;
 
 namespace PrimeConsoleCore
 {
@@ -24,27 +17,27 @@ namespace PrimeConsoleCore
         /* Variables */
         private static EventWaitHandle[] waithandle = new AutoResetEvent[Environment.ProcessorCount];
         // Numbers
-        public static BigInteger zahl = 1;
-        public static BigInteger anzahl = 0;
-        public static BigInteger primzahl = 0;
-        public static int threads = 0;
+        public static BigInteger primefromprimestats = 1;
+        public static BigInteger primeoverall = 0;
+        public static BigInteger prime = 0;
+        public static int threads = Environment.ProcessorCount;
         // Text
-        public static string user = "";
-        public static string pass = "";
-        public static string token = "";
-        public static string version = "0.9.1";
+        public static string user;
+        public static string pass;
+        public static string token;
+        public static string version = "0.9.5";
         // Bools
         public static bool visible = true;
-        public static bool läuft = false;
+        public static bool listediting = false;
         public static bool stop = false;
-        public static bool läuft2 = false;
+        public static bool setnewprimenumber = false;
 
         /* Dictionarys */
         public static Dictionary<string, string> config = new Dictionary<string, string>();
         public static Dictionary<string, string> userconfig = new Dictionary<string, string>();
 
         /* Threads */
-        public static Thread tastethread = new Thread(new ThreadStart(taste));
+        public static Thread buttonthread = new Thread(new ThreadStart(button));
 
         /* %directorypath% by Jonathan */
         public static string ParsePath(string path) //function by dr4yyee
@@ -62,7 +55,6 @@ namespace PrimeConsoleCore
         /* Main*/
         public static void Main()
         {
-            Console.SetWindowPosition(0, 0);
             Config.checkfiles();
             Console.Title = "PrimeConsoleCore - Version "+ config["version"];
             if (config["welcome_message"] == "true")
@@ -83,14 +75,18 @@ namespace PrimeConsoleCore
                 Console.Clear();
             }
             Login.login();
-            threads = Environment.ProcessorCount;
+            start();
             Parallel.Invoke(() =>
                  {
-                     berechnung();
+                     if(config["prime_found"] == "false")
+                     {
+                         Console.WriteLine(" >> Calculating started.");
+                     }
+                     calculate();
                  },
                  () =>
                  {
-                     tastethread.Start();
+                     buttonthread.Start();
                  }
                 );
         }
@@ -102,7 +98,7 @@ namespace PrimeConsoleCore
                 Dictionary<string, string> values = new Dictionary<string, string>();
                 values.Add("username",Program.user);
                 values.Add("token", Program.token);
-                values.Add("prime", Convert.ToString(primzahl));
+                values.Add("prime", Convert.ToString(prime));
                 sendprimes_values = Login.connect(Program.config["link"] + "prime/client_sendprimes.php", values);
             }
             catch (Exception e)
@@ -126,7 +122,7 @@ namespace PrimeConsoleCore
                 Console.WriteLine(" >> Primes were not send to the server! (2)");
             }
         }
-        public static void stoppen ()
+        public static void stopcalculation ()
         {
             stop = true;
             for(int i = 0; i < Environment.ProcessorCount; i++)
@@ -140,8 +136,8 @@ namespace PrimeConsoleCore
             Console.WriteLine("  ║                                                                          ║");
             Console.WriteLine("  ╚══════════════════════════════════════════════════════════════════════════╝");
             Console.WriteLine("");
-            Console.WriteLine(" >> Number of founded primes: "+anzahl);
-            Console.WriteLine(" >> Current prime: " + primzahl);
+            Console.WriteLine(" >> Number of all found primes: " + primeoverall);
+            Console.WriteLine(" >> Current prime: " + prime);
             sendprimesperbutton();
             Console.ReadLine();
             stop = false;
@@ -153,16 +149,19 @@ namespace PrimeConsoleCore
                 }
                 waithandle[i].Set();
             }
-            taste();
+            if (config["prime_found"] == "false")
+            {
+                Console.WriteLine(" >> Calculating continued.");
+            }
         }
-        public static void berechnung ()
+        public static void calculate ()
         {
-            List<BigInteger> vorgegebenezahlen = new List<BigInteger>();
+            List<BigInteger> givennumbers = new List<BigInteger>();
+            BigInteger newnumber = primefromprimestats + 1;
             for (int i = 0; i < Environment.ProcessorCount; i++)
             {
-                vorgegebenezahlen.Add(zahl);
-                Console.WriteLine(zahl);
-                zahl++;
+                givennumbers.Add(newnumber);
+                newnumber++;
             }
             for (int i = 0; i < Environment.ProcessorCount; i++)
             {
@@ -179,37 +178,36 @@ namespace PrimeConsoleCore
                             {
                                 waithandle[once].WaitOne();
                             }
-                            BigInteger zahl3 = vorgegebenezahlen.ElementAt(0);
-                            if (läuft == true)
-                            {
-                                while (läuft == true)
+                            BigInteger testnumber = givennumbers.ElementAt(0);
+                                while (listediting == true)
                                 {
                                     System.Threading.Thread.Sleep(1);
                                 }
-                            }
-                            läuft = true;
-                            vorgegebenezahlen.Remove(vorgegebenezahlen.ElementAt(0));
-                            vorgegebenezahlen.Add(vorgegebenezahlen.ElementAt(Environment.ProcessorCount - 2) + 1);
-                            läuft = false;
-                            bool checking = prüfediezahl(zahl3, once);
+                            listediting = true;
+                            givennumbers.Remove(givennumbers.ElementAt(0));
+                            givennumbers.Add(givennumbers.ElementAt(Environment.ProcessorCount - 2) + 1);
+                            listediting = false;
+                            bool checking = checknumber(testnumber, once);
                             if (checking == true)
                             {
-                                if(primzahl < zahl3)
+                                primeoverall++;
+                                if (prime < testnumber)
                                 {
-                                    if (läuft2 == true)
+                                    while (setnewprimenumber == true)
                                     {
-                                        while (läuft2 == true)
-                                        {
-                                            System.Threading.Thread.Sleep(1);
-                                        }
+                                        System.Threading.Thread.Sleep(1);
                                     }
-                                    läuft2 = true;
-                                    primzahl = zahl3;
-                                    läuft2 = false;
+                                    setnewprimenumber = true;
+                                    prime = testnumber;
+                                    setnewprimenumber = false;
                                 }
-                                if (visible == true)
+                                if (visible == true && config["prime_found"] == "true")
                                 {
-                                    Console.WriteLine(" >> Prime found!! " + zahl3);
+                                    Console.WriteLine(" >> You found a new Primenumber: " + testnumber);
+                                    if(config["sound"] == "true")
+                                    {
+                                        Console.Beep(5000, 1);
+                                    }
                                 }
                             }
                         }
@@ -222,19 +220,19 @@ namespace PrimeConsoleCore
                 Console.ReadLine();
             }
         }
-        public static bool prüfediezahl (BigInteger ziffer, int thread)
+        public static bool checknumber (BigInteger number, int thread)
         {
-            BigInteger teiler = 2;
-            bool rechnet = true;
-            while (rechnet == true)
+            BigInteger divisor = 2;
+            bool calculating = true;
+            while (calculating == true)
             {
                 if(stop == true)
                 {
                     waithandle[thread].WaitOne();
                 }
-                if (ziffer % teiler == 0 && ziffer != 1)
+                if (number % divisor == 0)
                 {
-                    if (ziffer == teiler)
+                    if (number == divisor)
                     {
                         return true;
                     }
@@ -245,145 +243,128 @@ namespace PrimeConsoleCore
                 }
                 else
                 {
-                    teiler++;
+                    divisor++;
                 }
-                if (ziffer == 1)
+                if (number == 1)
                 {
-                    ziffer++;
-                    teiler = 2;
+                    number++;
+                    divisor = 2;
                 }
             }
             return false;
         }
-        public static void taste()
+        public static void button()
         {
-            switch (Console.ReadKey().Key)
+            while (true)
             {
-                case ConsoleKey.P:
-                    Console.Write("\b \b");
-                    stoppen();
-                    break;
-                case ConsoleKey.E:
-                    visible = false;
-                    einstellungen();
-                    visible = true;
-                    taste();
-                    break;
-                case ConsoleKey.H:
-                    visible = false;
-                    hilfe();
-                    visible = true;
-                    taste();
-                    break;
-                case ConsoleKey.S:
-                    sendprimesperbutton();
-                    taste();
-                    break;
-                default:
-                    taste();
-                    break;
+                switch (Console.ReadKey().Key)
+                {
+                    case ConsoleKey.P:
+                        Console.Write("\b \b");
+                        stopcalculation();
+                        break;
+                    case ConsoleKey.S:
+                        visible = false;
+                        settings();
+                        visible = true;
+                        break;
+                    case ConsoleKey.H:
+                        visible = false;
+                        help();
+                        visible = true;
+                        break;
+                    case ConsoleKey.W:
+                        sendprimesperbutton();
+                        break;
+                    case ConsoleKey.N:
+                        if (config["prime_found"] == "false")
+                        {
+                            Console.WriteLine(" >> New calculated prime: " + prime);
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
         }
-        public static void einstellungen()
+        private static void truefalse(string name, string setting)
         {
-            Console.Clear();
-            Console.WriteLine("");
-            Console.WriteLine("  ╔══════════════════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("  ║                                                                          ║");
-            Console.WriteLine("  ║                       PrimeConsoleCore :: Settings                       ║");
-            Console.WriteLine("  ║                                                                          ║");
-            Console.WriteLine("  ║                        What do you want to change?                       ║");
-            Console.WriteLine("  ║             (type the relevant number to change the setting)             ║");
-            Console.WriteLine("  ║                                                                          ║");
-            Console.WriteLine("  ║          activate/deactivate sounds                   : press 1          ║");
-            Console.WriteLine("  ║          activate/deactivate \"Prime found!!\" message:   press 2          ║");
-            Console.WriteLine("  ║          activate/deactivate welcome message          : press 3          ║");
-            Console.WriteLine("  ║                                                                          ║");
-            Console.WriteLine("  ╚══════════════════════════════════════════════════════════════════════════╝");
+            Console.Write("\n");
+            Console.WriteLine(" >> Your editing \""+name+"\": Currently "+config[setting]+"");
+            Console.WriteLine(" >> Type \"true\" or \"false\"");
             Console.Write(" >> ");
-            var einstellung = "";
-            switch (Console.ReadKey().Key)
+            switch (Console.ReadLine())
             {
-                case ConsoleKey.D1:
-                    Console.Write("\n");
-                    Console.WriteLine("Type \"True\" or \"False\"");
-                    einstellung = Console.ReadLine();
-                    if (einstellung == "true" || einstellung == "True")
-                    {
-                        config["sound"] = "true";
-                    }
-                    else if (einstellung == "false" || einstellung == "False")
-                    {
-                        config["sound"] = "false";
-                    }
-                    else
-                    {
-                        Console.WriteLine("Only \"True\" or \"False\"!");
-                        Console.ReadLine();
-                        break;
-                    }
+                case "true":
+                case "True":
+                case "t":
+                    config[setting] = "true";
                     break;
-                case ConsoleKey.D2:
-                    Console.Write("\n");
-                    Console.WriteLine("Type \"True\" or \"False\"");
-                    einstellung = Console.ReadLine();
-                    if (einstellung == "true" || einstellung == "True")
-                    {
-                        config["prime_found"] = "true";
-                    }
-                    else if (einstellung == "false" || einstellung == "False")
-                    {
-                        config["prime_found"] = "false";
-                    }
-                    else
-                    {
-                        Console.WriteLine("Only \"True\" or \"False\"!");
-                        Console.ReadLine();
-                        break;
-                    }
-                    break;
-                case ConsoleKey.D3:
-                    Console.Write("\n");
-                    Console.WriteLine("Type \"True\" or \"False\"");
-                    einstellung = Console.ReadLine();
-                    if (einstellung == "true" || einstellung == "True")
-                    {
-                        config["welcome_message"] = "true";
-                    }
-                    else if (einstellung == "false" || einstellung == "False")
-                    {
-                        config["welcome_message"] = "false";
-                    }
-                    else
-                    {
-                        Console.WriteLine("Only \"True\" or \"False\"!");
-                        Console.ReadLine();
-                        break;
-                    }
+                case "false":
+                case "False":
+                case "f":
+                    config[setting] = "false";
                     break;
                 default:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(" >> Only \"true\" or \"false\"!");
+                    Console.ResetColor();
+                    Console.ReadLine();
                     break;
             }
-            File.WriteAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ParsePath(@"%localappdata%\\PCC\config.json")), JsonConvert.SerializeObject(config, Formatting.Indented));
-            Console.WriteLine("Do you want to change other settings? (yes / no)");
-            switch(Console.ReadLine())
-            {
-                case "yes":
-                    einstellungen();
-                    break;
-                case "Ja":
-                    einstellungen();
-                    break;
-                case "no":
-                    break;
-                case "nein":
-                    break;
-                default:
-                    break;
-            }
-            Console.Clear();
         }
-        public static void hilfe()
+        public static void settings()
+        {
+            while (true)
+            {
+                Console.Clear();
+                Console.WriteLine("");
+                Console.WriteLine("  ╔══════════════════════════════════════════════════════════════════════════╗");
+                Console.WriteLine("  ║                                                                          ║");
+                Console.WriteLine("  ║                       PrimeConsoleCore :: Settings                       ║");
+                Console.WriteLine("  ║                                                                          ║");
+                Console.WriteLine("  ║                     What do you would like to change?                    ║");
+                Console.WriteLine("  ║             (type the relevant number to change the setting)             ║");
+                Console.WriteLine("  ║                                                                          ║");
+                Console.WriteLine("  ║          activate/deactivate sounds                   : press 1          ║");
+                Console.WriteLine("  ║          activate/deactivate \"Prime found!!\" message: press 2            ║");
+                Console.WriteLine("  ║          activate/deactivate welcome message          : press 3          ║");
+                Console.WriteLine("  ║                                                                          ║");
+                Console.WriteLine("  ╚══════════════════════════════════════════════════════════════════════════╝");
+                Console.Write(" >> ");
+                switch (Console.ReadKey().Key)
+                {
+                    case ConsoleKey.D1:
+                        truefalse("sounds", "sound");
+                        break;
+                    case ConsoleKey.D2:
+                        truefalse("prime found message", "prime_found");
+                        break;
+                    case ConsoleKey.D3:
+                        truefalse("enable welcome message", "welcome_message");
+                        break;
+                    default:
+                        break;
+                }
+                File.WriteAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ParsePath(@"%localappdata%\\PCC\config.json")), JsonConvert.SerializeObject(config, Formatting.Indented));
+                Console.WriteLine(" >> Do you would like to change other settings? (yes / no)");
+                switch (Console.ReadLine())
+                {
+                    case "yes":
+                    case "Ja":
+                        break;
+                    case "no":
+                    case "nein":
+                        Console.Clear();
+                        return;
+                    default:
+                        Console.Clear();
+                        return;
+                }
+                Console.Clear();
+            }
+        }
+        public static void help()
         {
             Console.Clear();
             Console.WriteLine("");
@@ -393,9 +374,10 @@ namespace PrimeConsoleCore
             Console.WriteLine("  ║                                                                          ║");
             Console.WriteLine("  ║          Press the relevant button to start the relevant option          ║");
             Console.WriteLine("  ║                                                                          ║");
-            Console.WriteLine("  ║                        Stop calculating : press P                        ║");
-            Console.WriteLine("  ║                        Show help        : press H                        ║");
-            Console.WriteLine("  ║                        Show settings    : press E                        ║");
+            Console.WriteLine("  ║                   Stop calculating           : press P                   ║");
+            Console.WriteLine("  ║                   Show help                  : press H                   ║");
+            Console.WriteLine("  ║                   Change settings            : press S                   ║");
+            Console.WriteLine("  ║                   Send primes to PrimeStats  : press W                   ║");
             Console.WriteLine("  ║                                                                          ║");
             Console.WriteLine("  ║                       Go back by pressing a button                       ║");
             Console.WriteLine("  ║                                                                          ║");
@@ -405,31 +387,36 @@ namespace PrimeConsoleCore
         }
         public static void start()
         {
-            Console.WriteLine("");
-            Console.WriteLine("  ╔══════════════════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("  ║                                                                          ║");
-            Console.WriteLine("  ║                       PrimeConsoleCore :: Welcome!                       ║");
-            Console.WriteLine("  ║                                                                          ║");
-            Console.WriteLine("  ║                        Stop calculating: press P                         ║");
-            Console.WriteLine("  ║                        Show help:        press H                         ║");
-            Console.WriteLine("  ║                        Show settings:    press E                         ║");
-            Console.WriteLine("  ║                                                                          ║");
-            Console.WriteLine("  ║                  Start calculation by pressing a button                  ║");
-            Console.WriteLine("  ║                                                                          ║");
-            Console.WriteLine("  ╚══════════════════════════════════════════════════════════════════════════╝");
-            Console.WriteLine("");
-            switch (Console.ReadKey().Key)
+            while (true)
             {
-                case ConsoleKey.E:
-                    einstellungen();
-                    start();
-                    break;
-                case ConsoleKey.H:
-                    hilfe();
-                    start();
-                    break;
-                default:
-                    break;
+                Console.WriteLine("");
+                Console.WriteLine("  ╔══════════════════════════════════════════════════════════════════════════╗");
+                Console.WriteLine("  ║                                                                          ║");
+                Console.WriteLine("  ║                       PrimeConsoleCore :: Welcome!                       ║");
+                Console.WriteLine("  ║                                                                          ║");
+                Console.WriteLine("  ║                   Stop calculating           : press P                   ║");
+                Console.WriteLine("  ║                   Show help                  : press H                   ║");
+                Console.WriteLine("  ║                   Change settings            : press S                   ║");
+                Console.WriteLine("  ║                   Send primes to PrimeStats  : press W                   ║");
+                Console.WriteLine("  ║                                                                          ║");
+                Console.WriteLine("  ║                      Your calculting with "+threads+" threads.                     ║");
+                Console.WriteLine("  ║                                                                          ║");
+                Console.WriteLine("  ║                    Start calculation by pressing Enter                   ║");
+                Console.WriteLine("  ║                                                                          ║");
+                Console.WriteLine("  ╚══════════════════════════════════════════════════════════════════════════╝");
+                Console.WriteLine("");
+                Console.WriteLine("  Highest calculated prime from PrimeStats: " + primefromprimestats + "");
+                switch (Console.ReadKey().Key)
+                {
+                    case ConsoleKey.S:
+                        settings();
+                        break;
+                    case ConsoleKey.H:
+                        help();
+                        break;
+                    default:
+                        return;
+                }
             }
         }
     }
