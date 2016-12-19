@@ -37,8 +37,8 @@ $RECYCLE.BIN/
 .vs
 .gitattributes
 .gitignore
-ConsoleApplication2/bin/
-ConsoleApplication2/obj/
+PrimeConsoleCore/bin/
+PrimeConsoleCore/obj/
 
 # Directories potentially created on remote AFP share
 .AppleDB
